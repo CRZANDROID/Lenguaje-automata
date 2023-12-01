@@ -39,25 +39,43 @@ multi_char_transitions = {
     'q16':{'>':'q17','<':'q17','==':'q17','=<':'q17','=>':'q17'},
     'q24':{'>':'q25','<':'q25','==':'q25','=<':'q25','=>':'q25'},
 }
+grammar_rules = {
+    'q0': {r'[a-zA-Z0-9]': 'S -> AX1', 'q1': 'X1 -> BX2'},
+    'q1': {r'[a-zA-Z0-9]': 'X1 -> BX2', r';': 'X2 -> PV'},
+    'q2': {'string': 'V -> string', 'int': 'V -> int'}
+}
 state_stack = []
+applied_rules = set()
+
 
 def make_transition(state, input_char, buffer):
-    global state_stack
+    global state_stack, applied_rules
+
     if state in multi_char_transitions:
         buffer += input_char
         for word, next_state in multi_char_transitions[state].items():
             if buffer == word:
-                state_stack.append(state)  # Almacenar el estado actual en la pila
+                
+                rule = grammar_rules.get(state, {}).get(word, f"{state} -> {next_state}")
+                if rule and rule not in applied_rules:
+                    state_stack.append(rule)
+                    applied_rules.add(rule)
+                print("Pila actualizada:", state_stack)
                 return next_state, ''
             elif word.startswith(buffer):
                 return state, buffer
-        buffer = ''  
+        buffer = ''
     
     for pattern, next_state in transitions[state].items():
         if re.fullmatch(pattern, input_char):
-            state_stack.append(state)  # Almacenar el estado actual en la pila
+            
+            rule = grammar_rules.get(state, {}).get(pattern, f"{state} -> {next_state}")
+            if rule and rule not in applied_rules:
+                state_stack.append(rule)  
+                applied_rules.add(rule)
+                print("Pila actualizada:", state_stack)
             return next_state, ''
-    return state, buffer    
+    return state, buffer
 
 
 color_fondo = "#282a36"  
@@ -113,12 +131,13 @@ stack_display.config(yscrollcommand=scrollbar.set)
 
 def display_stack():
     stack_content = "\n".join(state_stack)
-    stack_display.delete('1.0', tk.END)  # Limpia el contenido actual
-    stack_display.insert(tk.END, stack_content)  # Inserta el nuevo contenido
+    stack_display.delete('1.0', tk.END)  
+    stack_display.insert(tk.END, stack_content)  
 
 
 def process_input():
-    global current_state
+    global current_state, applied_rules
+    applied_rules.clear() 
     input_string = input_text.get("1.0", "end-1c")
     current_state = 'q0'
     buffer = ''
@@ -126,7 +145,7 @@ def process_input():
     visited_states = []
     x, y = 50, 50  
 
-    # Vaciar la pila al principio del procesamiento
+    
     state_stack.clear()
 
 
