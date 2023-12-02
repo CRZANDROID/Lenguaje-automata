@@ -40,9 +40,29 @@ multi_char_transitions = {
     'q24':{'>':'q25','<':'q25','==':'q25','=<':'q25','=>':'q25'},
 }
 grammar_rules = {
-    'q0': {r'[a-zA-Z0-9]': 'S -> AX1', 'q1': 'X1 -> BX2'},
+    'q0': {r'[a-zA-Z0-9]': 'S -> AX1', 'q1': 'X1 -> BX2','Fun': 'S -> FX4','Vi':'S -> HZ','War':'S -> WZ1'},
     'q1': {r'[a-zA-Z0-9]': 'X1 -> BX2', r';': 'X2 -> PV'},
-    'q2': {'string': 'V -> string', 'int': 'V -> int'}
+    'q2': {'string': 'V -> string', 'int': 'V -> int'},
+    'q4': {r'[A-Z]':'X4 -> KY1','Malph':'X4 -> KY2'},
+    'q5': {r'[a-z]':'Y1 -> RY2',r'\[':'Y2 -> CY3'},
+    'q6': {r'\]':'Y3 ->OY4'},
+    'q7': {r'\(':'Y4 ->P1Y5'},
+    'q8': {'contenido':'Y5 ->NQ'},
+    'q9': {r'\)':'Q -> )'},
+    'q11':{r'\[':'Y2 -> CY3'},
+    'q12':{r'\{':'Z -> dX4'},
+    'q13': { r'\"': 'X4 -> GX5'},
+    'q15':{'=>':'X5 -> TX6','<=':'X5 -> TX6','==':'X5 -> TX6','<':'X5 -> TX6','>':'X5 -> TX6'},
+    'q16':{r'[a-z0-9]':'X4 ->GX5','=>':'X5 -> TX6','<=':'X5 -> TX6','==':'X5 -> TX6','<':'X5 -> TX6','>':'X5 -> TX6'},
+    'q17':{r'[0-9a-z]':'X6 -> GX7',r'\"':'X6 ->GX7'},
+    'q19':{r'\}':'X7 -> bY4'},
+    'q20':{r'\}':'X7 -> bY4'},
+    'q21': {r'\(':'Y4 ->P1Y5'},
+    'q22': {r'\{':'Z -> dZ2'},
+    'q23': {r'[a-z0-9]': 'Z2 -> aZ3'},
+    'q24': {r'[a-z0-9]': 'Z3 -> BZ4','=>':'Z4 -> TZ5','<=':'Z4 -> TZ5','==':'Z4 -> TZ5','<':'Z4 -> TZ5','>':'Z4 -> TZ5'},
+    'q25': {r'[a-z0-9]': 'Z5 -> aZ6'},
+    'q26': {r'[a-z0-9]': 'Z6 -> BZ7', r'\}': 'Z7 -> bY4'}
 }
 state_stack = []
 applied_rules = set()
@@ -51,12 +71,13 @@ applied_rules = set()
 def make_transition(state, input_char, buffer):
     global state_stack, applied_rules
 
+    
     if state in multi_char_transitions:
         buffer += input_char
         for word, next_state in multi_char_transitions[state].items():
             if buffer == word:
                 
-                rule = grammar_rules.get(state, {}).get(word, f"{state} -> {next_state}")
+                rule = grammar_rules.get(state, {}).get(word, None)
                 if rule and rule not in applied_rules:
                     state_stack.append(rule)
                     applied_rules.add(rule)
@@ -64,17 +85,19 @@ def make_transition(state, input_char, buffer):
                 return next_state, ''
             elif word.startswith(buffer):
                 return state, buffer
-        buffer = ''
+        buffer = ''  
+
     
     for pattern, next_state in transitions[state].items():
         if re.fullmatch(pattern, input_char):
-            
-            rule = grammar_rules.get(state, {}).get(pattern, f"{state} -> {next_state}")
+           
+            rule = grammar_rules.get(state, {}).get(pattern, None)
             if rule and rule not in applied_rules:
-                state_stack.append(rule)  
+                state_stack.append(rule)
                 applied_rules.add(rule)
                 print("Pila actualizada:", state_stack)
-            return next_state, ''
+            return next_state, buffer
+
     return state, buffer
 
 
