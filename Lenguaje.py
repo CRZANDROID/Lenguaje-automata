@@ -160,21 +160,28 @@ def display_stack():
 
 def process_input():
     global current_state, applied_rules
-    applied_rules.clear() 
+    applied_rules.clear()
     input_string = input_text.get("1.0", "end-1c")
     current_state = 'q0'
     buffer = ''
     canvas.delete("all")  
     visited_states = []
     x, y = 50, 50  
-
-    
     state_stack.clear()
 
+    reached_terminal = False  # Indicador de si se ha alcanzado un estado terminal
 
     for char in input_string:
         if char in [' ', '\n', '\r']:
             continue
+
+        # Verificar si se ha alcanzado un estado terminal
+        if is_terminal_state(current_state):
+            reached_terminal = True
+
+        # Si se alcanza un estado terminal, no procesar más caracteres
+        if reached_terminal:
+            break
 
         if current_state not in visited_states:
             draw_state(canvas, current_state, x, y)
@@ -185,15 +192,17 @@ def process_input():
                 x += 100
 
         current_state, buffer = make_transition(current_state, char, buffer)
-        if current_state == 'q0' and buffer == '':
-            break
 
+    # Actualizar estado
     state_label.config(text=f"Estado actual: {current_state}")
-    is_valid = is_terminal_state(current_state)
+    
+    # Verificar si la cadena es válida o inválida
+    is_valid = is_terminal_state(current_state) and not reached_terminal
     result_label.config(text="Cadena Válida" if is_valid else "Cadena Inválida")
     update_state_colors(canvas, visited_states, is_valid)
 
     display_stack()
+
 
     stack_label = tk.Label(root, text="", fg=color_texto, bg=color_fondo, font=fuente_texto)
     stack_label.pack(pady=20)
